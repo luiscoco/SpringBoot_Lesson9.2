@@ -1,97 +1,91 @@
-# SpringBoot_Lesson9
+# SpringBoot_Lesson9.2
 
 ## Propmt for the Code Agent (Codex, Gemini Code Assistant or Copilot)
 
 **Context**:
 
-I am learning to write unit tests for a Spring Boot application using Spring Boot 3.3 and Java 17. 
+I am learning to write integration tests for a Spring Boot REST API using Spring Boot 3.3 and Java 17.
 
-I want to test a service component in complete isolation from the data layer, without loading any Spring context.
+I want to test the controller layer and HTTP responses using MockMvc, while mocking the service layer.
+
+The project has Basic auth enabled: endpoint pattern /tasks/** requires role USER, and there is an in-memory user user with password password.
 
 **Task**:
 
-Generate a **JUnit 5 unit test** for a TaskService class.
+Generate a JUnit 5 integration test for a TaskController class.
 
-Known code in the app:
+**Known code in the app**:
 
-Package names:
+Controller: com.example.demo.controller.TaskController
+
+GET /tasks/{id} returns a TaskDto
+
+GET /tasks supports optional completed query param
+
+POST /tasks accepts a Task and returns a TaskDto (201 Created)
 
 Service: com.example.demo.service.TaskService
 
-Entity: com.example.demo.Task
-
-Repository: com.example.demo.TaskRepository (extends JpaRepository<Task, Long> and has List<Task> findByCompleted(boolean completed))
+Methods include TaskDto getTaskById(long id)
 
 DTO: com.example.demo.dto.TaskDto (record: TaskDto(Long id, String description, boolean completed))
 
-Exception: com.example.demo.exception.ResourceNotFoundException
-
-**TaskService methods**:
-
-List<TaskDto> findAllTasks()
-
-TaskDto getTaskById(long id) — throws ResourceNotFoundException("Task not found with id: " + id) when not found
-
-List<TaskDto> findTasksByStatus(boolean completed)
-
-TaskDto createTask(Task request) — saves a new Task constructed from the incoming request and returns a mapped DTO
+Security: Basic auth required for /tasks/**; in-memory user user / password.
 
 **Constraints**:
 
-Mock TaskRepository with Mockito.
+Use @SpringBootTest to load the application context.
 
-Do not load any Spring context (no @SpringBootTest, @ExtendWith(SpringExtension.class), etc.).
+Use @AutoConfigureMockMvc to test the web layer without a real HTTP server.
 
-Use JUnit 5 and AssertJ for assertions.
+Mock TaskService with @MockBean.
 
-Use Mockito JUnit 5 extension (@ExtendWith(MockitoExtension.class)), @Mock, and @InjectMocks.
+Use MockMvc to perform the request.
+
+Include a Basic auth header for the request (user:password).
 
 **Steps**:
 
-Assume the classes and packages above exist exactly as described.
+Create src/test/java/com/example/demo/controller/TaskControllerTest.java with package com.example.demo.controller.
 
-Create src/test/java/com/example/demo/service/TaskServiceTest.java with package com.example.demo.service.
+Annotate the test class with @SpringBootTest and @AutoConfigureMockMvc.
 
-Configure a mocked TaskRepository and an @InjectMocks TaskService.
+Inject MockMvc and declare @MockBean TaskService taskService.
 
-**Add tests**:
+Stub taskService.getTaskById(1L) to return new TaskDto(1L, "Test Task", false).
 
-Happy path: getTaskById returns a TaskDto with the expected id/description/completed.
+Perform a GET request to /tasks/1 with Basic auth for user:password.
 
-Not found: getTaskById throws ResourceNotFoundException with a message containing the id.
+Assert HTTP status 200 (OK).
 
-findAllTasks maps entities to DTOs correctly.
+Assert the response is JSON and matches the DTO: id = 1, description = "Test Task", completed = false (e.g., using jsonPath).
 
-findTasksByStatus(false) delegates to findByCompleted(false) and maps results.
-
-createTask saves a new entity and returns a DTO with the generated id and correct fields.
-
-Use Mockito when(...).thenReturn(...) (or thenAnswer(...) where needed) to stub repository calls.
-
-Use AssertJ for all assertions.
+Include commands to run only this test using Maven or Gradle.
 
 **Acceptance Criteria**:
 
-The test class uses @ExtendWith(MockitoExtension.class), @Mock, and @InjectMocks.
+The test class is annotated with @SpringBootTest and @AutoConfigureMockMvc.
 
-No Spring testing annotations are present.
+TaskService is mocked with @MockBean.
 
-The repository dependency is a mock and all repository methods used by the tests are stubbed to return predictable results.
+The test performs a request using MockMvc and includes Basic auth.
 
-Assertions use AssertJ and verify DTO fields match expectations.
+The test verifies HTTP 200 OK.
+
+The test verifies the JSON response body fields.
 
 The test compiles and passes.
 
 **Deliverables**:
 
-The full code for TaskServiceTest.java.
+Full code for TaskControllerTest.java.
 
-The command to run only this test.
+Commands to run the test.
 
 **Run Only This Test**:
 
-Maven: mvn test -Dtest=com.example.demo.service.TaskServiceTest
+Maven: mvn test -Dtest=com.example.demo.controller.TaskControllerTest
 
-Gradle (Windows): gradlew.bat test --tests "com.example.demo.service.TaskServiceTest"
+Gradle (Windows): gradlew.bat test --tests "com.example.demo.controller.TaskControllerTest"
 
-Gradle (Unix/macOS): ./gradlew test --tests "com.example.demo.service.TaskServiceTest"
+Gradle (Unix/macOS): ./gradlew test --tests "com.example.demo.controller.TaskControllerTest"
